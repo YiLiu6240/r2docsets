@@ -120,48 +120,48 @@ create.sqlite.index <- function(pkg, conn) {
 }
 
 r2docsets <- function(which.package) {
-    # in Rlibs.docset/Contents/Resources/Documents
-    sapply(c("RSQLite", "XML", "selectr", "magrittr"),
-           require, character.only=TRUE)
+  # in Rlibs.docset/Contents/Resources/Documents
+  sapply(c("RSQLite", "XML", "selectr", "magrittr"),
+         require, character.only=TRUE)
 
-    pwd <- getwd()
+  pwd <- getwd()
 
-    unlink(sprintf("%s.docset", which.package), recursive = TRUE)
-    docsetroot <- sprintf("%s.docset/Contents/Resources/Documents", which.package)
-    dir.create(file.path(docsetroot), recursive = TRUE)
-    file.copy(from = "Info.plist",
-              to = sprintf("%s.docset/Contents/", which.package))
+  unlink(sprintf("%s.docset", which.package), recursive = TRUE)
+  docsetroot <- sprintf("%s.docset/Contents/Resources/Documents", which.package)
+  dir.create(file.path(docsetroot), recursive = TRUE)
+  file.copy(from = "Info.plist",
+            to = sprintf("%s.docset/Contents/", which.package))
 
-    # switch to Documents folder
-    setwd(docsetroot)
+  # switch to Documents folder
+  setwd(docsetroot)
 
-    # Package list
-    dir.create(file.path("doc", "html"), recursive = TRUE)
+  # Package list
+  dir.create(file.path("doc", "html"), recursive = TRUE)
 
-    make.packages.html(temp = TRUE)
-    file.copy(from = file.path(tempdir(), ".R/doc/html/packages.html"),
-              to = file.path("doc", "html"), copy.date = TRUE)
-    file.copy(from = file.path(R.home("doc"), "html", "R.css"),
-              to = file.path("doc", "html"), copy.date = TRUE)
-    download.file(url = "https://www.r-project.org/Rlogo.png",
-                  destfile = file.path("doc", "html", "logo.png"), mode = "wb")
+  make.packages.html(temp = TRUE)
+  file.copy(from = file.path(tempdir(), ".R/doc/html/packages.html"),
+            to = file.path("doc", "html"), copy.date = TRUE)
+  file.copy(from = file.path(R.home("doc"), "html", "R.css"),
+            to = file.path("doc", "html"), copy.date = TRUE)
+  download.file(url = "https://www.r-project.org/Rlogo.png",
+                destfile = file.path("doc", "html", "logo.png"), mode = "wb")
 
-    doc <- htmlTreeParse(file.path("doc", "html", "packages.html"),
-                         useInternal = TRUE)
-    replace.logo(doc)
-    remove.navigation(doc)
-    saveXML(doc, file.path("doc", "html", "packages.html"))
+  doc <- htmlTreeParse(file.path("doc", "html", "packages.html"),
+                       useInternal = TRUE)
+  replace.logo(doc)
+  remove.navigation(doc)
+  saveXML(doc, file.path("doc", "html", "packages.html"))
 
-    generate.help.html(which.package)
+  generate.help.html(which.package)
 
-    con <- dbConnect(SQLite(), dbname = "../docSet.dsidx")
-    dbGetQuery(con, "CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT, package TEXT, version TEXT)")
-    dbListTables(con)
-    dbGetQuery(con, "select * from searchIndex")
+  con <- dbConnect(SQLite(), dbname = "../docSet.dsidx")
+  dbGetQuery(con, "CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT, package TEXT, version TEXT)")
+  dbListTables(con)
+  dbGetQuery(con, "select * from searchIndex")
 
-    create.sqlite.index(which.package, con)
+  create.sqlite.index(which.package, con)
 
-    dbDisconnect(con)
+  dbDisconnect(con)
 
-    setwd(pwd)
+  setwd(pwd)
 }
