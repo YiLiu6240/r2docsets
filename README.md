@@ -21,3 +21,6 @@ Install dependencies in `R` by
 ``` r
 install.packages(c("RSQLite", "XML", "selectr", "magrittr"))
 ```
+
+## TODO
+- rm in-function variable assignment: like `func1(x <- 1, y <- 2, z = x+y)`
