@@ -144,25 +144,20 @@ create.sqlite.index <- function(pkg, conn) {
   dbCommit(conn)
 }
 
-r2docsets <- function(which.package) {
+create.new.docset <- function(which.package, pwd) {
   # in Rlibs.docset/Contents/Resources/Documents
   sapply(c("RSQLite", "XML", "selectr", "magrittr"),
          require, character.only=TRUE)
-
-  pwd <- getwd()
 
   unlink(sprintf("%s.docset", which.package), recursive = TRUE)
   docsetroot <- sprintf("%s.docset/Contents/Resources/Documents", which.package)
   dir.create(file.path(docsetroot), recursive = TRUE)
   file.copy(from = "Info.plist",
             to = sprintf("%s.docset/Contents/", which.package))
-
-  # switch to Documents folder
   setwd(docsetroot)
 
   # Package list
   dir.create(file.path("doc", "html"), recursive = TRUE)
-
   make.packages.html(temp = TRUE)
   file.copy(from = file.path(tempdir(), ".R/doc/html/packages.html"),
             to = file.path("doc", "html"), copy.date = TRUE)
@@ -176,18 +171,25 @@ r2docsets <- function(which.package) {
   replace.logo(doc)
   remove.navigation(doc)
   saveXML(doc, file.path("doc", "html", "packages.html"))
-
   generate.help.html(which.package)
-
   con <- dbConnect(SQLite(), dbname = "../docSet.dsidx")
   dbGetQuery(con,
              "CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT, package TEXT, version TEXT)")
   dbListTables(con)
   dbGetQuery(con, "select * from searchIndex")
-
   create.sqlite.index(which.package, con)
-
   dbDisconnect(con)
 
   setwd(pwd)
+}
+
+r2docsets <- function(which.package) {
+  pwd <- getwd()
+  tryCatch({
+    create.new.docset(which.package, pwd)
+  },
+  error = function(e) {
+    setwd(pwd)
+    print(e)
+  })
 }
